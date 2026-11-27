@@ -8,6 +8,7 @@
 
 #include <magic_enum/magic_enum.hpp>
 #include <magic_enum/magic_enum_flags.hpp>
+#include <magic_enum/magic_enum_format.hpp>
 
 #include <cstdint>
 #include <cstdlib>
@@ -35,22 +36,6 @@ struct fmt::formatter<roq::Encoding> {
   constexpr auto parse(format_parse_context &context) { return std::begin(context); }
   auto format(roq::Encoding const &value, format_context &context) const {
     using namespace std::literals;
-    auto name = [&]() -> std::string_view {
-      switch (value) {
-        using enum roq::Encoding;
-        case UNDEFINED:
-          return "UNDEFINED"sv;
-        case FIX:
-          return "FIX"sv;
-        case JSON:
-          return "JSON"sv;
-        case SBE:
-          return "SBE"sv;
-        case FBS:
-          return "FBS"sv;
-      }
-      std::abort();
-    }();
-    return fmt::format_to(context.out(), "{}"sv, name);
+    return fmt::format_to(context.out(), "{}"sv, magic_enum::enum_flags_name(value));
   }
 };

@@ -178,8 +178,10 @@ struct fmt::formatter<roq::Mask<T>> {
   constexpr auto parse(format_parse_context &context) { return std::begin(context); }
   auto format(roq::Mask<T> const &value, format_context &context) const {
     using namespace std::literals;
-    using iterator = typename roq::Mask<T>::iterator;
-    using sentinel = typename roq::Mask<T>::sentinel;
-    return fmt::format_to(context.out(), "{}"sv, fmt::join(iterator{value}, sentinel{}, "|"sv));
+    T tmp{value.get()};
+    if (tmp == T{}) {
+      return context.out();
+    }
+    return fmt::format_to(context.out(), "{}"sv, magic_enum::enum_flags_name(tmp));
   }
 };

@@ -8,6 +8,7 @@
 
 #include <magic_enum/magic_enum.hpp>
 #include <magic_enum/magic_enum_flags.hpp>
+#include <magic_enum/magic_enum_format.hpp>
 
 #include <cstdint>
 #include <cstdlib>
@@ -48,48 +49,6 @@ struct fmt::formatter<roq::SupportType> {
   constexpr auto parse(format_parse_context &context) { return std::begin(context); }
   auto format(roq::SupportType const &value, format_context &context) const {
     using namespace std::literals;
-    auto name = [&]() -> std::string_view {
-      switch (value) {
-        using enum roq::SupportType;
-        case UNDEFINED:
-          return "UNDEFINED"sv;
-        case REFERENCE_DATA:
-          return "REFERENCE_DATA"sv;
-        case MARKET_STATUS:
-          return "MARKET_STATUS"sv;
-        case TOP_OF_BOOK:
-          return "TOP_OF_BOOK"sv;
-        case MARKET_BY_PRICE:
-          return "MARKET_BY_PRICE"sv;
-        case MARKET_BY_ORDER:
-          return "MARKET_BY_ORDER"sv;
-        case TRADE_SUMMARY:
-          return "TRADE_SUMMARY"sv;
-        case STATISTICS:
-          return "STATISTICS"sv;
-        case TIME_SERIES:
-          return "TIME_SERIES"sv;
-        case CREATE_ORDER:
-          return "CREATE_ORDER"sv;
-        case MODIFY_ORDER:
-          return "MODIFY_ORDER"sv;
-        case CANCEL_ORDER:
-          return "CANCEL_ORDER"sv;
-        case ORDER_ACK:
-          return "ORDER_ACK"sv;
-        case ORDER:
-          return "ORDER"sv;
-        case ORDER_STATE:
-          return "ORDER_STATE"sv;
-        case TRADE:
-          return "TRADE"sv;
-        case POSITION:
-          return "POSITION"sv;
-        case FUNDS:
-          return "FUNDS"sv;
-      }
-      std::abort();
-    }();
-    return fmt::format_to(context.out(), "{}"sv, name);
+    return fmt::format_to(context.out(), "{}"sv, magic_enum::enum_flags_name(value));
   }
 };

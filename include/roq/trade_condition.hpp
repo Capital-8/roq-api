@@ -8,6 +8,7 @@
 
 #include <magic_enum/magic_enum.hpp>
 #include <magic_enum/magic_enum_flags.hpp>
+#include <magic_enum/magic_enum_format.hpp>
 
 #include <cstdint>
 #include <cstdlib>
@@ -34,20 +35,6 @@ struct fmt::formatter<roq::TradeCondition> {
   constexpr auto parse(format_parse_context &context) { return std::begin(context); }
   auto format(roq::TradeCondition const &value, format_context &context) const {
     using namespace std::literals;
-    auto name = [&]() -> std::string_view {
-      switch (value) {
-        using enum roq::TradeCondition;
-        case UNDEFINED:
-          return "UNDEFINED"sv;
-        case IMPLIED_MATCHING:
-          return "IMPLIED_MATCHING"sv;
-        case FORCED_LIQUIDATION:
-          return "FORCED_LIQUIDATION"sv;
-        case RETAIL_PRICE_IMPROVEMENT:
-          return "RETAIL_PRICE_IMPROVEMENT"sv;
-      }
-      std::abort();
-    }();
-    return fmt::format_to(context.out(), "{}"sv, name);
+    return fmt::format_to(context.out(), "{}"sv, magic_enum::enum_flags_name(value));
   }
 };
