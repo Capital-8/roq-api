@@ -6,6 +6,9 @@
 
 #include <fmt/format.h>
 
+#include <magic_enum/magic_enum.hpp>
+#include <magic_enum/magic_enum_flags.hpp>
+
 #include <cstdint>
 #include <cstdlib>
 
@@ -20,6 +23,11 @@ enum class TradeCondition : uint32_t {  // NOLINT(performance-enum-size)
 };
 
 }  // namespace roq
+
+template <>
+struct magic_enum::customize::enum_range<roq::TradeCondition> {
+  static constexpr bool is_flags = true;
+};
 
 template <>
 struct fmt::formatter<roq::TradeCondition> {

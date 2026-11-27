@@ -6,6 +6,9 @@
 
 #include <fmt/format.h>
 
+#include <magic_enum/magic_enum.hpp>
+#include <magic_enum/magic_enum_flags.hpp>
+
 #include <cstdint>
 #include <cstdlib>
 
@@ -34,6 +37,11 @@ enum class SupportType : uint64_t {  // NOLINT(performance-enum-size)
 };
 
 }  // namespace roq
+
+template <>
+struct magic_enum::customize::enum_range<roq::SupportType> {
+  static constexpr bool is_flags = true;
+};
 
 template <>
 struct fmt::formatter<roq::SupportType> {
