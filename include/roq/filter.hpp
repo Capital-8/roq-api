@@ -14,9 +14,8 @@
 
 namespace roq {
 
-//! Enumeration of filter fields
-enum class Filter : uint64_t {  // NOLINT(performance-enum-size)
-  UNDEFINED = 0,
+//! Enumeration of filter field flags
+enum class Filter : uint64_t {
   ACCOUNT = 0x1,      //!< By account
   EXCHANGE = 0x2,     //!< By exchange
   SYMBOL = 0x4,       //!< By symbol

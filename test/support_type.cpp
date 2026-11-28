@@ -10,7 +10,6 @@ using namespace std::literals;
 using namespace roq;
 
 TEST_CASE("support_type_format", "[support_type]") {
-  CHECK(fmt::format("{}"sv, SupportType::UNDEFINED) == "UNDEFINED"sv);
   CHECK(fmt::format("{}"sv, SupportType::REFERENCE_DATA) == "REFERENCE_DATA"sv);
   // ...
   CHECK(fmt::format("{}"sv, SupportType::FUNDS) == "FUNDS"sv);

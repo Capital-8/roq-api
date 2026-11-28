@@ -3,77 +3,29 @@
 #pragma once
 
 #include <fmt/format.h>
-#include <fmt/ranges.h>
 
+#include <magic_enum/magic_enum.hpp>
 #include <magic_enum/magic_enum_flags.hpp>
 
 #include <initializer_list>
-#include <limits>
-#include <ranges>
-#include <type_traits>
-#include <utility>
 
 namespace roq {
 
-// implements a bitmap mask using an underlying enumeration
-// some limitations:
-// - flag (enum value) should not be 0 -- we don't currently check
-// - flag (enum value) should be powers of two, or combinations -- we don't currently check
-
 template <typename T>
-  requires std::is_enum_v<T>
+  requires magic_enum::is_flags_enum_v<T>
 struct Mask final {
-  using value_type = typename std::underlying_type_t<T>;
-
-  struct sentinel final {};
-
-  struct iterator final {
-    // std::iterator_traits
-    using difference_type = std::ptrdiff_t;
-    using value_type = T const;
-    using pointer = T const *;
-    using reference = T const;
-    using iterator_category = std::forward_iterator_tag;
-
-    using underlying_type = std::underlying_type_t<T>;
-
-    iterator(Mask<T> value) : value_{value.get()} {}
-
-    bool operator==(sentinel const &) const {
-      for (; bit_ < std::numeric_limits<underlying_type>::digits; ++bit_) {
-        auto mask = static_cast<underlying_type>(size_t{1} << bit_);
-        if (value_ < mask) {
-          break;
-        }
-        if (value_ & mask) {
-          return false;
-        }
-      }
-      return true;
-    }
-
-    reference operator*() const {
-      auto mask = static_cast<underlying_type>(size_t{1} << bit_++);
-      return static_cast<value_type>(mask);
-    }
-
-    iterator &operator++() { return *this; }
-    void operator++(int) { ++(*this); }
-
-   private:
-    underlying_type value_;
-    mutable size_t bit_ = 0;  // skip undefined
-  };
+  using value_type = T;
+  using underlying_type = typename std::underlying_type_t<value_type>;
 
   constexpr Mask() = default;
 
-  constexpr explicit Mask(value_type mask) : value_{mask} {}
+  constexpr explicit Mask(underlying_type mask) : value_{mask} {}
 
-  constexpr explicit Mask(T flag) : value_{static_cast<value_type>(flag)} {}
+  constexpr explicit Mask(T flag) : value_{static_cast<underlying_type>(flag)} {}
 
   constexpr Mask(std::initializer_list<T> flags) {
     for (auto &flag : flags) {
-      value_ |= static_cast<value_type>(flag);
+      value_ |= static_cast<underlying_type>(flag);
     }
   }
 
@@ -82,42 +34,54 @@ struct Mask final {
 
   constexpr auto operator<=>(Mask const &) const = default;
 
-  constexpr bool empty() const { return value_ == value_type{}; }
+  constexpr bool empty() const { return value_ == underlying_type{}; }
 
-  constexpr void reset() { value_ = value_type{}; }
+  constexpr void reset() { value_ = underlying_type{}; }
 
-  constexpr value_type get() const { return value_; }
+  constexpr underlying_type get() const { return value_; }
 
-  constexpr bool is_same(T flag) const { return value_ == static_cast<value_type>(flag); }
+  constexpr bool is_same(T flag) const { return value_ == static_cast<underlying_type>(flag); }
 
-  constexpr bool has(T flag) const { return value_ & static_cast<value_type>(flag); }
+  // has
 
-  constexpr bool has_any(T flag) const { return (value_ & static_cast<value_type>(flag)) != value_type{}; }
+  constexpr bool has(T flag) const { return magic_enum::enum_flags_test(T{value_}, flag); }
+
+  constexpr bool has(std::initializer_list<T> flags) const {
+    underlying_type value = {};
+    for (auto &flag : flags) {
+      value |= static_cast<underlying_type>(flag);
+    }
+    return magic_enum::enum_flags_test(T{value_}, T{value});
+  }
+
+  constexpr bool has(Mask rhs) const { return magic_enum::enum_flags_test(T{value_}, T{rhs.value_}); }
+
+  // has-any
+
+  constexpr bool has_any(T flag) const { return magic_enum::enum_flags_test_any(T{value_}, flag); }
 
   constexpr bool has_any(std::initializer_list<T> flags) const {
-    value_type value = {};
+    underlying_type value = {};
     for (auto &flag : flags) {
-      value |= static_cast<value_type>(flag);
+      value |= static_cast<underlying_type>(flag);
     }
-    return value_ & value;
+    return magic_enum::enum_flags_test_any(T{value_}, T{value});
   }
 
-  constexpr bool has_any(Mask rhs) const { return (value_ & rhs.value_) != value_type{}; }
+  constexpr bool has_any(Mask rhs) const { return magic_enum::enum_flags_test_any(T{value_}, T{rhs.value_}); }
 
-  constexpr bool has_all(T flag) const { return (value_ & static_cast<value_type>(flag)) == static_cast<value_type>(flag); }
+  // has-none
 
-  constexpr bool has_all(std::initializer_list<T> flags) const {
-    value_type value = {};
-    for (auto &flag : flags) {
-      value |= static_cast<value_type>(flag);
-    }
-    return (value_ & value) == value;
-  }
+  constexpr bool has_none(T flag) const { return !has_any(flag); }
 
-  constexpr bool has_all(Mask rhs) const { return (value_ & rhs.value_) == rhs.value_; }
+  constexpr bool has_none(std::initializer_list<T> flags) const { return !has_any(flags); }
+
+  constexpr bool has_none(Mask rhs) const { return !has_any(rhs); }
+
+  // set
 
   constexpr Mask &set(T flag) {
-    value_ |= static_cast<value_type>(flag);
+    value_ |= static_cast<underlying_type>(flag);
     return *this;
   }
 
@@ -126,8 +90,10 @@ struct Mask final {
     return *this;
   }
 
+  // remove
+
   constexpr Mask &remove(T flag) {
-    value_ &= ~static_cast<value_type>(flag);
+    value_ &= ~static_cast<underlying_type>(flag);
     return *this;
   }
 
@@ -136,11 +102,7 @@ struct Mask final {
     return *this;
   }
 
-  constexpr bool has_none(T flag) const { return !has_any(flag); }
-
-  constexpr bool has_none(std::initializer_list<T> flags) const { return !has_any(flags); }
-
-  constexpr bool has_none(Mask rhs) const { return !has_any(rhs); }
+  // logical
 
   constexpr Mask negate() const { return Mask{~value_}; }
 
@@ -148,7 +110,7 @@ struct Mask final {
 
   constexpr Mask &set(std::initializer_list<T> flags) {
     for (auto &flag : flags) {
-      value_ |= static_cast<value_type>(flag);
+      value_ |= static_cast<underlying_type>(flag);
     }
     return *this;
   }
@@ -168,7 +130,7 @@ struct Mask final {
   }
 
  private:
-  value_type value_ = {};
+  underlying_type value_ = {};
 };
 
 }  // namespace roq
@@ -178,10 +140,7 @@ struct fmt::formatter<roq::Mask<T>> {
   constexpr auto parse(format_parse_context &context) { return std::begin(context); }
   auto format(roq::Mask<T> const &value, format_context &context) const {
     using namespace std::literals;
-    T tmp{value.get()};
-    if (tmp == T{}) {
-      return context.out();
-    }
-    return fmt::format_to(context.out(), "{}"sv, magic_enum::enum_flags_name(tmp));
+    T value_2{value.get()};
+    return fmt::format_to(context.out(), "{}"sv, magic_enum::enum_flags_name(value_2));
   }
 };

@@ -14,9 +14,8 @@
 
 namespace roq {
 
-//! Enumeration of message encoding types (informational, only)
-enum class Encoding : uint32_t {  // NOLINT(performance-enum-size)
-  UNDEFINED = 0,
+//! Enumeration of message encoding type flags (informational, only)
+enum class Encoding : uint32_t {
   FIX = 0x1,   //!< FIX
   JSON = 0x2,  //!< JSON
   SBE = 0x4,   //!< SBE

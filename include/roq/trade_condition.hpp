@@ -14,9 +14,8 @@
 
 namespace roq {
 
-//! Enumeration of trade conditions
-enum class TradeCondition : uint32_t {  // NOLINT(performance-enum-size)
-  UNDEFINED = 0,
+//! Enumeration of trade condition flags
+enum class TradeCondition : uint32_t {
   IMPLIED_MATCHING = 0x1,          //!< Matching implied from spread markets
   FORCED_LIQUIDATION = 0x2,        //!< Forced order liquidation
   RETAIL_PRICE_IMPROVEMENT = 0x4,  //!< Retail Price Improvement
